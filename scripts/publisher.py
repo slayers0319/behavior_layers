@@ -11,9 +11,9 @@ data_yaw = 0.0
 def talker():
     
     global name, data_x, data_y, data_yaw, data
-    pub = rospy.Publisher('chatter7', String, queue_size=10)
-    rospy.init_node('pedestrain', anonymous=True)
-    rate = rospy.Rate(0.5) # 1hz
+    pub = rospy.Publisher('behavior', String, queue_size=10)
+    rospy.init_node('pedestrain_behavior', anonymous=True)
+    rate = rospy.Rate(1) # 1hz
     while not rospy.is_shutdown():
         data = String()
         n=input()
@@ -22,29 +22,41 @@ def talker():
             rospy.loginfo(data)
             pub.publish(data)
             break
-        elif n==-3:
-            data.data = "none"
-            rospy.loginfo(data)
-            pub.publish(data)
-        elif n==0:
-            data.data = "personR,-0.33,3.15,personR,1.13,2.97"
-            rospy.loginfo(data)
-            pub.publish(data)
-        elif n==-2:
-            data.data = "clear"
-            rospy.loginfo(data)
-            pub.publish(data)
-        else:
-            for i in range(n):
+        elif n==1:
+            data_x = random.uniform(-0.3,-0.28)
+            data_y = random.uniform(0.5,1.0)
+            for i in range(3):
                 rate.sleep()
-                name = "obstacle"
-                data_x = random.uniform(0,0.5)
-                data_y = random.uniform(0.5,1.0)
-                data.data = name+","+str(data_x)+","+str(data_y)+","+"obstacle"+","+str(random.uniform(-0.5,0.0))+","+str(random.uniform(0.5,1.0))
+                name = "R"
+                data.data = name+","+str(data_x)+","+str(data_y)
                 rospy.loginfo(data)
                 pub.publish(data)
+                data_x = data_x+0.09
+                data_y = data_y-0.1
+        elif n==2:
+            for i in range(3):
+                rate.sleep()
+                name = "L"
+                data_x = random.uniform(0.25,0.3)
+                data_y = random.uniform(0.5,1.0)
+                data.data = name+","+str(data_x)+","+str(data_y)
+                rospy.loginfo(data)
+                pub.publish(data)
+        elif n==3:
+            name = "R"
+            data_x = random.uniform(0.1,0.5)
+            data_y = random.uniform(0.5,1.0)
+            data.data = name+","+str(data_x)+","+str(data_y)
+            rospy.loginfo(data)
+            pub.publish(data)
+        elif n==4:
+            name = "L"
+            data_x = random.uniform(-0.5,-0.1)
+            data_y = random.uniform(0.5,1.0)
+            data.data = name+","+str(data_x)+","+str(data_y)
+            rospy.loginfo(data)
+            pub.publish(data)
             
-
         rospy.loginfo("-------------")
         rate.sleep()
 

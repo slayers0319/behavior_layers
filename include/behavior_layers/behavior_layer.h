@@ -44,6 +44,12 @@ double pi = 3.14159265359;
 std::string CLEAR = "clear";
 std::string NONE = "none";
 
+std::string direction = "R";
+// std::string R = "R";
+// std::string r = "r";
+// std::string L = "L";
+// std::string l = "l";
+
 class BehaviorLayer : public costmap_2d::Layer
 {
 public:

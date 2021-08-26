@@ -82,28 +82,43 @@ void dataSplit(const std_msgs::String::ConstPtr& msg){
     ROS_INFO("split_result.size() = %d", (int)split_result.size());
 #endif
 
-    if(split_result.size()%3 || split_result.empty() || split_result.size()<=3){
+    if(split_result.empty() || split_result.size()!=3){
 #if DEBUG
         ROS_INFO("not a point");
 #endif
         return;
     }else{
+        ROS_INFO("%s:(%s,%s)",split_result[0].c_str(),split_result[1].c_str(),split_result[2].c_str());
+
         //clear vector
         std::vector<PointDouble> ().swap(related_points);
         std::vector<PointDouble> ().swap(absolute_points);
-
-        //split_result=["P1", "x1", "y1", "P2", "x2", "y2"]  data format
-        ROS_INFO("(%s,%s) (%s,%s)",split_result[1].c_str(),split_result[2].c_str(),split_result[4].c_str(),split_result[5].c_str());
-        for(int i = 1;i < split_result.size(); i+=3) {
-            PointDouble pt;
-            
-            double sx = std::strtod(split_result[i].c_str(),NULL); //convert string to double
-            pt.x= sx;
-
-            double sy = std::strtod(split_result[i+1].c_str(),NULL); //convert string to double
-            pt.y= sy;
-            related_points.push_back(pt);
+        direction = split_result[0].c_str();
+        if(direction=="R"||direction=="r"){
+            double sx = std::strtod(split_result[1].c_str(),NULL);
+            if(sx>0){//in right side and move to right
+                //ROS_INFO("in right side and move to right");
+                return;
+            }
+        }else if(direction=="L"||direction=="l"){
+            double sx = std::strtod(split_result[1].c_str(),NULL);
+            if(sx<0){//in left side and move to right
+                //ROS_INFO("in left side and move to right");
+                return;
+            }
         }
+
+        //split_result=["R", "x1", "y1"]  data format
+
+        PointDouble pt;
+        double sx = std::strtod(split_result[1].c_str(),NULL); //convert string to double
+        pt.x = sx;
+        double sy = std::strtod(split_result[2].c_str(),NULL); //convert string to double
+        pt.y = sy;
+        related_points.push_back(pt);
+        pt.x = sx>0?-2.5:2.5;
+        related_points.push_back(pt);
+        //ROS_INFO("(%f,%f) (%f,%f)", related_points[0].x, related_points[0].y, related_points[1].x, related_points[1].y);
     }
 
     //calculate absolute coordinate
@@ -182,7 +197,7 @@ void BehaviorLayer::onInitialize(){
 #endif
 
     ros::NodeHandle ped_nh("behavior_data");
-    pedestrian_sub_ = ped_nh.subscribe<std_msgs::String>("/chatter7" ,1000, dataSplit);
+    pedestrian_sub_ = ped_nh.subscribe<std_msgs::String>("/behavior" ,1000, dataSplit);
     ROS_INFO("behavior_data nodehandle");
     ros::NodeHandle nh("~/" + name_);
     current_ = true;
