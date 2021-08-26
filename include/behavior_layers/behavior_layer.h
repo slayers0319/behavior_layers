@@ -1,5 +1,5 @@
-#ifndef FUSION_LAYER_H_
-#define FUSION_LAYER_H_
+#ifndef BEHAVIOR_LAYER_H_
+#define BEHAVIOR_LAYER_H_
 #include <ros/ros.h>
 #include <costmap_2d/layer.h>
 #include <costmap_2d/layered_costmap.h>
@@ -8,9 +8,7 @@
 #include <mutex>
 #include <string>
 
-
-
-namespace fusion_layer_namespace
+namespace behavior_layer_namespace
 {
 void split(char *src,const char *separator, std::vector<std::string> &dest);
 void dataSplit(const std_msgs::String::ConstPtr& msg);
@@ -46,10 +44,10 @@ double pi = 3.14159265359;
 std::string CLEAR = "clear";
 std::string NONE = "none";
 
-class FusionLayer : public costmap_2d::Layer
+class BehaviorLayer : public costmap_2d::Layer
 {
 public:
-    FusionLayer();
+    BehaviorLayer();
 
     virtual void onInitialize();
     virtual void updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y, double* max_x,

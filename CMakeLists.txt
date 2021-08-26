@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(fusion_layers)
+project(behavior_layers)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -218,4 +218,4 @@ catkin_install_python(PROGRAMS
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
-add_library(fusion_layer src/fusion_layer.cpp)
+add_library(behavior_layer src/behavior_layer.cpp)

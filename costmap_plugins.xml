@@ -1,5 +1,5 @@
-<library path="lib/libfusion_layer">
-  <class type="fusion_layer_namespace::FusionLayer" base_class_type="costmap_2d::Layer">
+<library path="lib/libbehavior_layer">
+  <class type="behavior_layer_namespace::BehaviorLayer" base_class_type="costmap_2d::Layer">
     <description>Demo Layer that adds a point 1 meter in front of the robot</description>
   </class>
 </library>

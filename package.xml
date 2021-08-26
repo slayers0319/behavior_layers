@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>fusion_layers</name>
+  <name>behavior_layers</name>
   <version>0.0.0</version>
-  <description>The fusion_layers package</description>
+  <description>The behavior_layers package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->

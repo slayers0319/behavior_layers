@@ -4,18 +4,18 @@
 #include <stdlib.h>
 #include <string>
 #include <std_msgs/String.h>
-#include <fusion_layers/fusion_layer.h>
+#include <behavior_layers/behavior_layer.h>
 #include <pluginlib/class_list_macros.h>
 
 #define DEBUG 0
 
-PLUGINLIB_EXPORT_CLASS(fusion_layer_namespace::FusionLayer, costmap_2d::Layer)
+PLUGINLIB_EXPORT_CLASS(behavior_layer_namespace::BehaviorLayer, costmap_2d::Layer)
 
 using costmap_2d::LETHAL_OBSTACLE;
 
-namespace fusion_layer_namespace{
+namespace behavior_layer_namespace{
 
-FusionLayer::FusionLayer() {}
+BehaviorLayer::BehaviorLayer() {}
 
 void split(char *src,const char *separator, std::vector<std::string> &dest) {
 /*
@@ -71,7 +71,7 @@ void dataSplit(const std_msgs::String::ConstPtr& msg){
         //clear point vector
         std::vector<PointDouble> ().swap(related_points);
         std::vector<PointDouble> ().swap(absolute_points);
-        ROS_INFO("clear fusion layers");
+        ROS_INFO("clear behavior layers");
         return;
     }
 
@@ -176,18 +176,18 @@ void computeMapBounds(){
 
 }
 
-void FusionLayer::onInitialize(){ 
+void BehaviorLayer::onInitialize(){ 
 #if DEBUG
-    ROS_INFO("fusion_layers in DEBUG mode!!");
+    ROS_INFO("behavior_layers in DEBUG mode!!");
 #endif
 
-    ros::NodeHandle ped_nh("fusion_data");
+    ros::NodeHandle ped_nh("behavior_data");
     pedestrian_sub_ = ped_nh.subscribe<std_msgs::String>("/chatter7" ,1000, dataSplit);
-    ROS_INFO("fusion_data nodehandle");
+    ROS_INFO("behavior_data nodehandle");
     ros::NodeHandle nh("~/" + name_);
     current_ = true;
     dsrv_ = new dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>(nh);
-    dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>::CallbackType cb = boost::bind(&FusionLayer::reconfigureCB, this, _1, _2);
+    dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>::CallbackType cb = boost::bind(&BehaviorLayer::reconfigureCB, this, _1, _2);
     dsrv_->setCallback(cb);
     costmap_2d::Costmap2D *costmap = layered_costmap_->getCostmap();
     _costmap_resolution = costmap->getResolution();
@@ -195,12 +195,12 @@ void FusionLayer::onInitialize(){
     _min_x = _min_y = _max_x = _max_y = 0;
 }
 
-void FusionLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level)
+void BehaviorLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level)
 {
     enabled_ = config.enabled;
 }
 
-void FusionLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y, double* max_x, double* max_y){
+void BehaviorLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y, double* max_x, double* max_y){
 
     if (!enabled_)
         return;
@@ -220,7 +220,7 @@ void FusionLayer::updateBounds(double robot_x, double robot_y, double robot_yaw,
     *max_y = std::max(*max_y, _max_y);
 }
 
-void FusionLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j){
+void BehaviorLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j){
     if (!enabled_)
         return;
     
@@ -229,7 +229,7 @@ void FusionLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int
     setPolygonCost(master_grid, absolute_points, LETHAL_OBSTACLE, min_i, min_j, max_i, max_j);
 }
 
-void FusionLayer::setPolygonCost(costmap_2d::Costmap2D &master_grid, const std::vector<PointDouble>& polygon, unsigned char cost,
+void BehaviorLayer::setPolygonCost(costmap_2d::Costmap2D &master_grid, const std::vector<PointDouble>& polygon, unsigned char cost,
                                              int min_i, int min_j, int max_i, int max_j){
 
     std::vector<PointInt> map_polygon;
@@ -259,7 +259,7 @@ void FusionLayer::setPolygonCost(costmap_2d::Costmap2D &master_grid, const std::
     }
 }
 
-void FusionLayer::rasterizePolygon(const std::vector<PointInt>& polygon, std::vector<PointInt>& polygon_cells){
+void BehaviorLayer::rasterizePolygon(const std::vector<PointInt>& polygon, std::vector<PointInt>& polygon_cells){
     // this implementation is a slighly modified version of Costmap2D::convexFillCells(...)
 
     //we need a minimum polygon of a traingle
@@ -327,7 +327,7 @@ void FusionLayer::rasterizePolygon(const std::vector<PointInt>& polygon, std::ve
 }
 
 
-void FusionLayer::polygonOutlineCells(const std::vector<PointInt>& polygon, std::vector<PointInt>& polygon_cells){
+void BehaviorLayer::polygonOutlineCells(const std::vector<PointInt>& polygon, std::vector<PointInt>& polygon_cells){
     for (unsigned int i = 0; i < polygon.size() - 1; ++i){
         raytrace(polygon[i].x, polygon[i].y, polygon[i + 1].x, polygon[i + 1].y, polygon_cells);
     }
@@ -338,7 +338,7 @@ void FusionLayer::polygonOutlineCells(const std::vector<PointInt>& polygon, std:
     }
 }
 
-void FusionLayer::raytrace(int x0, int y0, int x1, int y1, std::vector<PointInt>& cells){
+void BehaviorLayer::raytrace(int x0, int y0, int x1, int y1, std::vector<PointInt>& cells){
     int dx = abs(x1 - x0);
     int dy = abs(y1 - y0);
     PointInt pt;
