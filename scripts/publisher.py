@@ -3,6 +3,7 @@
 import rospy
 from std_msgs.msg import String
 import random
+from geometry_msgs.msg import Point
 
 data_x = 0.0
 data_y = 0.0
@@ -11,9 +12,10 @@ data_yaw = 0.0
 def talker():
     
     global name, data_x, data_y, data_yaw, data
-    pub = rospy.Publisher('behavior', String, queue_size=10)
+    pub = rospy.Publisher('person', String, queue_size=1)
     rospy.init_node('pedestrain_behavior', anonymous=True)
-    rate = rospy.Rate(1) # 1hz
+    hz=20
+    rate = rospy.Rate(hz) # 1hz
     while not rospy.is_shutdown():
         data = String()
         n=input()
@@ -22,17 +24,22 @@ def talker():
             rospy.loginfo(data)
             pub.publish(data)
             break
-        elif n==1:
-            data_x = random.uniform(-0.3,-0.28)
-            data_y = random.uniform(0.5,1.0)
-            for i in range(3):
+        elif n==0:
+            a=0
+            for i in range(5*hz):
                 rate.sleep()
-                name = "R"
-                data.data = name+","+str(data_x)+","+str(data_y)
+                if i%2==0:
+                    a=not a
+                if a==0:
+                    data.data="personR,-1,1"
+                else:
+                    data.data="personR,-0.5,0.5,personL,1.5,1.5,personL,-1.5,1.5,personR,1.5,1.5"
                 rospy.loginfo(data)
                 pub.publish(data)
-                data_x = data_x+0.09
-                data_y = data_y-0.1
+        elif n==1:
+            data.data="personR,-1,1"
+            rospy.loginfo(data)
+            pub.publish(data)
         elif n==2:
             for i in range(3):
                 rate.sleep()

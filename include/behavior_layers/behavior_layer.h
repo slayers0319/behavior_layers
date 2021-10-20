@@ -12,7 +12,7 @@ namespace behavior_layer_namespace
 {
 void split(char *src,const char *separator, std::vector<std::string> &dest);
 void dataSplit(const std_msgs::String::ConstPtr& msg);
-void thickened();
+void thickened(int i);
 void computeMapBounds();
 
 struct PointDouble{
@@ -29,8 +29,9 @@ double robot_px;
 double robot_py;
 double robot_pyaw;
 
-std::vector<PointDouble> related_points; //related points
-std::vector<PointDouble> absolute_points; //absolute points
+std::vector<std::vector<PointDouble>> related_points; //related points
+std::vector<std::vector<PointDouble>> absolute_points; //absolute points
+std::vector<PointDouble> temp;
 std::vector<std::string> split_result;
 
 std::mutex _data_mutex;
@@ -43,6 +44,7 @@ double pi = 3.14159265359;
 
 std::string CLEAR = "clear";
 std::string NONE = "none";
+std::string NEW = "new";
 
 std::string direction = "R";
 // std::string R = "R";

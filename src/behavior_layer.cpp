@@ -12,6 +12,7 @@
 PLUGINLIB_EXPORT_CLASS(behavior_layer_namespace::BehaviorLayer, costmap_2d::Layer)
 
 using costmap_2d::LETHAL_OBSTACLE;
+using costmap_2d::INSCRIBED_INFLATED_OBSTACLE;
 
 namespace behavior_layer_namespace{
 
@@ -69,8 +70,9 @@ void dataSplit(const std_msgs::String::ConstPtr& msg){
         return;
     }else if(msg->data.c_str()==CLEAR){
         //clear point vector
-        std::vector<PointDouble> ().swap(related_points);
-        std::vector<PointDouble> ().swap(absolute_points);
+        std::vector<std::vector<PointDouble>> ().swap(related_points);
+        std::vector<std::vector<PointDouble>> ().swap(absolute_points);
+        std::vector<PointDouble> ().swap(temp);
         ROS_INFO("clear behavior layers");
         return;
     }
@@ -78,70 +80,53 @@ void dataSplit(const std_msgs::String::ConstPtr& msg){
     //split data
     split(buf,",",split_result);
 
-#if DEBUG
-    ROS_INFO("split_result.size() = %d", (int)split_result.size());
-#endif
-
-    if(split_result.empty() || split_result.size()!=3){
-#if DEBUG
-        ROS_INFO("not a point");
-#endif
+    if(split_result.empty() || (split_result.size()%3)!=0){
         return;
     }else{
-        ROS_INFO("%s:(%s,%s)",split_result[0].c_str(),split_result[1].c_str(),split_result[2].c_str());
-
         //clear vector
-        std::vector<PointDouble> ().swap(related_points);
-        std::vector<PointDouble> ().swap(absolute_points);
-        direction = split_result[0].c_str();
-        if(direction=="R"||direction=="r"){
-            double sx = std::strtod(split_result[1].c_str(),NULL);
-            if(sx>0){//in right side and move to right
-                //ROS_INFO("in right side and move to right");
-                return;
-            }
-        }else if(direction=="L"||direction=="l"){
-            double sx = std::strtod(split_result[1].c_str(),NULL);
-            if(sx<0){//in left side and move to right
-                //ROS_INFO("in left side and move to right");
-                return;
-            }
-        }
-
-        //split_result=["R", "x1", "y1"]  data format
-
+        std::vector<std::vector<PointDouble>> ().swap(related_points);
+        std::vector<std::vector<PointDouble>> ().swap(absolute_points);
+        std::vector<PointDouble> ().swap(temp);
         PointDouble pt;
-        double sx = std::strtod(split_result[1].c_str(),NULL); //convert string to double
-        pt.x = sx;
-        double sy = std::strtod(split_result[2].c_str(),NULL); //convert string to double
-        pt.y = sy;
-        related_points.push_back(pt);
-        pt.x = sx>0?-2.5:2.5;
-        related_points.push_back(pt);
-        //ROS_INFO("(%f,%f) (%f,%f)", related_points[0].x, related_points[0].y, related_points[1].x, related_points[1].y);
+        for (int i = 0; i < split_result.size()/3; i++){
+            if(split_result[3*i]==NEW){
+                related_points.push_back(temp);
+                std::vector<PointDouble> ().swap(temp);
+            }
+            pt.x = std::strtod(split_result[3*i+1].c_str(), NULL); //convert string to double
+            pt.y = std::strtod(split_result[3*i+2].c_str(), NULL); //convert string to double
+            temp.push_back(pt);
+        }
+        related_points.push_back(temp);
+        std::vector<PointDouble> ().swap(temp);
     }
 
     //calculate absolute coordinate
     for(int i=0;i<related_points.size();++i){
-        double r =sqrt(pow(related_points[i].x,2)+pow(related_points[i].y,2));
-        double theata = atan2(related_points[i].y,related_points[i].x) - (pi/2);
+        for(int j=0;j<related_points[i].size();++j){
+            double r =sqrt(pow(related_points[i][j].x,2)+pow(related_points[i][j].y,2));
+            double theata = atan2(related_points[i][j].y,related_points[i][j].x) - (pi/2);
 
-        if((theata+pi)<=0){
-            theata = theata + 2*pi;
+            if((theata+pi)<=0){
+                theata = theata + 2*pi;
+            }
+            PointDouble pt;
+            pt.x = robot_px + cos(theata+robot_pyaw)*r;
+            pt.y = robot_py + sin(theata+robot_pyaw)*r;
+            temp.push_back(pt);
         }
-        PointDouble pt;
-        pt.x = robot_px + cos(theata+robot_pyaw)*r;
-        pt.y = robot_py + sin(theata+robot_pyaw)*r;
-        absolute_points.push_back(pt);
+        absolute_points.push_back(temp);
+        std::vector<PointDouble> ().swap(temp);
     }
 
 #if DEBUG
     ROS_INFO("before thickened absolute_points.size() =  %d", (int)absolute_points.size());
 #endif    
-
-    if(absolute_points.size()==2){
-        //加粗
-        thickened();
+    for(int i=0;i<absolute_points.size();++i){    
+        if(absolute_points[i].size()==2){
+            //加粗
+            thickened(i);
+        }
     }
 
 #if DEBUG
@@ -153,11 +138,11 @@ void dataSplit(const std_msgs::String::ConstPtr& msg){
 
 }
 
-void thickened(){
+void thickened(int i){
     // calculate the normal vector for AB
     PointDouble point_N;
-    point_N.x = absolute_points[1].y - absolute_points[0].y;
-    point_N.y = absolute_points[0].x - absolute_points[1].x;
+    point_N.x = absolute_points[i][1].y - absolute_points[i][0].y;
+    point_N.y = absolute_points[i][0].x - absolute_points[i][1].x;
 
     // get the absolute value of N to normalize and get
     // it to the length of the costmap resolution
@@ -167,13 +152,13 @@ void thickened(){
 
     // calculate the new points to get a polygon which can be filled
     PointDouble point;
-    point.x = absolute_points[0].x + point_N.x;
-    point.y = absolute_points[0].y + point_N.y;
-    absolute_points.push_back(point);
+    point.x = absolute_points[i][0].x + point_N.x;
+    point.y = absolute_points[i][0].y + point_N.y;
+    absolute_points[i].push_back(point);
 
-    point.x = absolute_points[1].x + point_N.x;
-    point.y = absolute_points[1].y + point_N.y;
-    absolute_points.push_back(point);
+    point.x = absolute_points[i][1].x + point_N.x;
+    point.y = absolute_points[i][1].y + point_N.y;
+    absolute_points[i].push_back(point);
 }
 
 void computeMapBounds(){
@@ -181,12 +166,14 @@ void computeMapBounds(){
     _min_x = _min_y = _max_x = _max_y = 0;
 
     for (int i = 0; i < absolute_points.size(); ++i){
-        double px = absolute_points[i].x;
-        double py = absolute_points[i].y;
-        _min_x = std::min(px, _min_x);
-        _min_y = std::min(py, _min_y);
-        _max_x = std::max(px, _max_x);
-        _max_y = std::max(py, _max_y);
+        for(int j = 0; j < absolute_points[i].size(); ++j){
+            double px = absolute_points[i][j].x;
+            double py = absolute_points[i][j].y;
+            _min_x = std::min(px, _min_x);
+            _min_y = std::min(py, _min_y);
+            _max_x = std::max(px, _max_x);
+            _max_y = std::max(py, _max_y);
+        }
     }
 
 }
@@ -240,8 +227,10 @@ void BehaviorLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, i
         return;
     
     //std::lock_guard<std::mutex> l(_data_mutex);
-
-    setPolygonCost(master_grid, absolute_points, LETHAL_OBSTACLE, min_i, min_j, max_i, max_j);
+    for (int i = 0; i < absolute_points.size(); i++)
+    {
+        setPolygonCost(master_grid, absolute_points[i], INSCRIBED_INFLATED_OBSTACLE-1, min_i, min_j, max_i, max_j);
+    }
 }
 
 void BehaviorLayer::setPolygonCost(costmap_2d::Costmap2D &master_grid, const std::vector<PointDouble>& polygon, unsigned char cost,
